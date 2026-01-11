@@ -2,251 +2,148 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>健身冲刺 (第16-36节)</title>
+    <title>健身课规划 (16-36节)</title>
     <style>
         :root {
-            --bg: #f4f7f6;
-            --surface: #ffffff;
-            --primary: #2196F3;    /* 计划色 */
-            --success: #4CAF50;    /* 完成色 */
-            --text-main: #333;
-            --text-sub: #777;
-            --today-border: #FF5722;
+            --bg: #f8f9fa;
+            --planned-bg: #e3f2fd;
+            --planned-text: #2196F3;
+            --done-bg: #e8f5e9;
+            --done-text: #4CAF50;
+            --today-border: #ff5722;
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .app-container { width: 100%; max-width: 800px; background: var(--surface); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; padding: 20px; }
+        body { font-family: sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; color: #333; }
+        .stats { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; width: 100%; max-width: 600px; display: flex; justify-content: space-around; font-size: 0.9em; }
         
-        /* 顶部仪表盘 */
-        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
-        .card { background: #f8f9fa; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #eee; }
-        .card h3 { margin: 0; font-size: 2em; color: var(--text-main); }
-        .card p { margin: 5px 0 0; color: var(--text-sub); font-size: 0.9em; }
-        .progress-bar { grid-column: 1 / -1; background: #eee; height: 10px; border-radius: 5px; overflow: hidden; position: relative; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--success), var(--primary)); width: 0%; transition: width 0.5s ease; }
-
-        /* 日历区域 */
-        .calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 10px; }
-        .weekday { text-align: center; font-weight: bold; color: #999; font-size: 0.9em; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; width: 100%; max-width: 600px; }
+        .weekday-header { font-weight: bold; text-align: center; padding: 5px 0; font-size: 0.8em; color: #666; }
+        .month-divider { grid-column: 1 / span 7; padding: 8px; font-weight: bold; background: #eee; font-size: 0.85em; margin-top: 10px; border-radius: 4px; }
         
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .day { background: white; border-radius: 5px; padding: 5px; min-height: 55px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; display: flex; flex-direction: column; border: 1.5px solid transparent; position: relative; }
+        .day:hover { background: #f0f0f0; }
+        .day.today { border-color: var(--today-border); }
+        .day.today::after { content: "今"; position: absolute; top: 2px; right: 2px; font-size: 10px; background: var(--today-border); color: white; padding: 1px 3px; border-radius: 2px; }
         
-        .month-title { grid-column: 1 / -1; margin-top: 15px; margin-bottom: 5px; font-weight: bold; font-size: 1.1em; color: var(--text-main); padding-left: 5px; border-left: 4px solid var(--text-main); }
-
-        .day {
-            aspect-ratio: 1/1;
-            border: 1px solid #eee;
-            border-radius: 10px;
-            padding: 5px;
-            cursor: pointer;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: all 0.2s;
-            background: #fff;
-        }
+        .day[data-status="planned"] { background-color: var(--planned-bg); border-color: var(--planned-text); }
+        .day[data-status="done"] { background-color: var(--done-bg); border-color: var(--done-text); }
         
-        /* 交互状态 */
-        .day:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 2; }
-        
-        .day.is-today { border: 2px solid var(--today-border); }
-        .day.is-today::after { content: "今天"; position: absolute; top: -8px; right: -6px; background: var(--today-border); color: white; font-size: 0.6em; padding: 2px 5px; border-radius: 4px; }
+        .date-num { font-size: 0.85em; font-weight: bold; }
+        .class-info { font-size: 0.75em; margin-top: auto; text-align: right; font-weight: bold; }
+        [data-status="planned"] .class-info { color: var(--planned-text); }
+        [data-status="done"] .class-info { color: var(--done-text); }
 
-        /* 状态样式 */
-        .day[data-status="planned"] { background-color: #E3F2FD; border-color: #BBDEFB; }
-        .day[data-status="planned"] .tag { color: var(--primary); }
-        
-        .day[data-status="done"] { background-color: #E8F5E9; border-color: #C8E6C9; }
-        .day[data-status="done"] .tag { color: var(--success); }
-
-        .date-num { font-weight: bold; font-size: 1em; color: #444; }
-        .tag { font-size: 0.75em; font-weight: 800; text-align: right; }
-        .icon { position: absolute; top: 5px; right: 5px; font-size: 1em; opacity: 0.8; }
-
-        /* 底部说明 */
-        .legend { margin-top: 20px; display: flex; gap: 15px; justify-content: center; font-size: 0.85em; color: #666; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-
+        .legend { margin-top: 15px; font-size: 0.8em; color: #666; display: flex; gap: 10px; }
+        .dot { width: 10px; height: 10px; display: inline-block; border-radius: 2px; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div style="text-align: center; margin-bottom: 20px;">
-        <h2 style="margin: 0;">💪 健身打卡 (第16~36课)</h2>
-        <p style="margin: 5px 0 0; color: #888; font-size: 0.9em;">目标日期：3月31日</p>
+    <h3 style="margin-bottom:10px;">🏋️ 健身课记录 (第16-36节)</h3>
+
+    <div class="stats">
+        <div>已完: <strong id="done-display">0</strong>/36</div>
+        <div>还需安排: <strong id="need-display">0</strong></div>
+        <div>目标: <strong>3月31日</strong></div>
     </div>
 
-    <div class="dashboard">
-        <div class="card">
-            <h3 id="current-count">0</h3>
-            <p>已完成课时</p>
-        </div>
-        <div class="card">
-            <h3 id="remaining-count">36</h3>
-            <p>剩余需安排</p>
-        </div>
-        <div class="progress-bar">
-            <div class="progress-fill" id="progress-fill"></div>
-        </div>
+    <div class="calendar-grid" id="calendar">
+        <div class="weekday-header">日</div><div class="weekday-header">一</div>
+        <div class="weekday-header">二</div><div class="weekday-header">三</div>
+        <div class="weekday-header">四</div><div class="weekday-header">五</div>
+        <div class="weekday-header">六</div>
     </div>
-
-    <div class="calendar-header">
-        <div class="weekday">日</div><div class="weekday">一</div><div class="weekday">二</div>
-        <div class="weekday">三</div><div class="weekday">四</div><div class="weekday">五</div>
-        <div class="weekday">六</div>
-    </div>
-
-    <div id="calendar" class="calendar-grid"></div>
 
     <div class="legend">
-        <span><i class="dot" style="background:var(--success)"></i>已完成</span>
-        <span><i class="dot" style="background:var(--primary)"></i>计划中</span>
-        <span><i class="dot" style="background:var(--today-border)"></i>今天</span>
+        <span><i class="dot" style="background:var(--done-text)"></i> 已完</span>
+        <span><i class="dot" style="background:var(--planned-text)"></i> 计划</span>
+        <span><i class="dot" style="background:var(--today-border)"></i> 今天</span>
     </div>
-</div>
 
 <script>
-    // --- 配置区域 ---
-    const CONFIG = {
-        totalTarget: 36,     // 总目标
-        preCompleted: 15,    // 之前已经完成的节数 (1-15节)
-        startDate: new Date(2026, 0, 1), // 显示起始日 (1月1日)
-        endDate: new Date(2026, 2, 31)   // 显示结束日 (3月31日)
-    };
-
-    // 获取今天日期的字符串 (YYYY-MM-DD)
-    const todayStr = new Date().toISOString().split('T')[0];
-
-    // --- 数据初始化 ---
-    // 读取本地存储，如果没有，则初始化“今天”为已完成
-    let schedule = JSON.parse(localStorage.getItem('fitnessSchedule_v3'));
+    const totalGoal = 36;
+    const baseCount = 15; // 之前已完成15节
+    const start = new Date(2026, 0, 1);
+    const end = new Date(2026, 2, 31);
     
-    if (!schedule) {
-        schedule = {};
-        // 首次打开，默认把今天(第16节)标记为已完成
+    // 修正日期获取：确保获取本地时间的 YYYY-MM-DD
+    function getLocalDateStr(date) {
+        let y = date.getFullYear();
+        let m = String(date.getMonth() + 1).padStart(2, '0');
+        let d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    const todayStr = getLocalDateStr(new Date());
+    let schedule = JSON.parse(localStorage.getItem('gym_v4')) || {};
+    
+    // 如果是第一次运行，默认今天上完了第16节
+    if (Object.keys(schedule).length === 0) {
         schedule[todayStr] = 'done';
-    }
-
-    // --- 核心逻辑 ---
-
-    function save() {
-        localStorage.setItem('fitnessSchedule_v3', JSON.stringify(schedule));
-        render();
-    }
-
-    function toggleDate(dateStr) {
-        const currentStatus = schedule[dateStr];
-        if (!currentStatus) {
-            schedule[dateStr] = 'planned'; // 空白 -> 计划
-        } else if (currentStatus === 'planned') {
-            schedule[dateStr] = 'done';    // 计划 -> 完成
-        } else {
-            delete schedule[dateStr];      // 完成 -> 空白
-        }
-        save();
     }
 
     function render() {
         const container = document.getElementById('calendar');
+        // 保留星期表头
+        const headers = Array.from(container.querySelectorAll('.weekday-header'));
         container.innerHTML = '';
+        headers.forEach(h => container.appendChild(h));
 
-        // 1. 计算课程编号
-        // 获取所有被选中的日期并排序
-        const activeDates = Object.keys(schedule).sort();
-        const dateToClassNum = {};
-        
-        activeDates.forEach((date, index) => {
-            // 核心公式：编号 = 之前的15节 + 列表中的位置 + 1
-            dateToClassNum[date] = CONFIG.preCompleted + index + 1;
+        // 排序已选日期用于编号
+        const sortedActiveDates = Object.keys(schedule).sort();
+        const dateToNum = {};
+        sortedActiveDates.forEach((d, i) => {
+            dateToNum[d] = baseCount + i + 1;
         });
 
-        // 2. 渲染日历
-        let current = new Date(CONFIG.startDate);
-        let currentMonth = -1;
+        let cur = new Date(start);
+        let curMonth = -1;
 
-        while (current <= CONFIG.endDate) {
-            const dateStr = current.toISOString().split('T')[0];
-            const month = current.getMonth();
-            const dayOfWeek = current.getDay();
-
-            // 绘制月份分割线
-            if (month !== currentMonth) {
-                currentMonth = month;
-                const monthDiv = document.createElement('div');
-                monthDiv.className = 'month-title';
-                monthDiv.innerText = `${current.getFullYear()}年 ${month + 1}月`;
-                container.appendChild(monthDiv);
-
-                // 补齐月初的空白格子
-                for(let i=0; i<dayOfWeek; i++) {
-                    container.appendChild(document.createElement('div'));
-                }
-            }
-
-            // 创建日期格子
-            const el = document.createElement('div');
-            el.className = 'day';
-            const status = schedule[dateStr];
+        while (cur <= end) {
+            const dateStr = getLocalDateStr(cur);
             
-            // 样式处理
-            if (dateStr === todayStr) el.classList.add('is-today');
-            if (status) el.setAttribute('data-status', status);
-
-            // 内容生成
-            let icon = '';
-            if (status === 'done') icon = '✅';
-            if (status === 'planned') icon = '📅';
-
-            let classNumDisplay = '';
-            if (status) {
-                classNumDisplay = `第${dateToClassNum[dateStr]}节`;
+            // 月份标题
+            if (cur.getMonth() !== curMonth) {
+                curMonth = cur.getMonth();
+                const div = document.createElement('div');
+                div.className = 'month-divider';
+                div.innerText = `${cur.getFullYear()}年 ${curMonth + 1}月`;
+                container.appendChild(div);
+                // 补齐月初空白
+                for(let i=0; i<cur.getDay(); i++) container.appendChild(document.createElement('div'));
             }
 
-            el.innerHTML = `
-                <div class="date-num">${current.getDate()}</div>
-                <div class="icon">${icon}</div>
-                <div class="tag">${classNumDisplay}</div>
+            const dayEl = document.createElement('div');
+            dayEl.className = 'day';
+            if (dateStr === todayStr) dayEl.classList.add('today');
+            
+            const status = schedule[dateStr];
+            if (status) dayEl.dataset.status = status;
+
+            dayEl.innerHTML = `
+                <div class="date-num">${cur.getDate()}</div>
+                <div class="class-info">${status ? '第'+dateToNum[dateStr]+'节' : ''}</div>
             `;
 
-            el.onclick = () => toggleDate(dateStr);
-            container.appendChild(el);
+            dayEl.onclick = () => {
+                if (!status) schedule[dateStr] = 'planned';
+                else if (status === 'planned') schedule[dateStr] = 'done';
+                else delete schedule[dateStr];
+                localStorage.setItem('gym_v4', JSON.stringify(schedule));
+                render();
+            };
 
-            current.setDate(current.getDate() + 1);
+            container.appendChild(dayEl);
+            cur.setDate(cur.getDate() + 1);
         }
 
-        // 3. 更新统计面板
-        updateStats(activeDates.length);
+        // 更新统计
+        const doneCount = baseCount + Object.values(schedule).filter(s => s === 'done').length;
+        document.getElementById('done-display').innerText = doneCount;
+        const totalPlanned = baseCount + sortedActiveDates.length;
+        document.getElementById('need-display').innerText = Math.max(0, totalGoal - totalPlanned);
     }
 
-    function updateStats(visibleCount) {
-        // 总完成数 = 之前隐形的15节 + 界面上标记为done的
-        const doneOnCalendar = Object.values(schedule).filter(s => s === 'done').length;
-        const totalDone = CONFIG.preCompleted + doneOnCalendar;
-        
-        // 总安排数 = 之前隐形的15节 + 界面上所有的(done + planned)
-        const totalPlanned = CONFIG.preCompleted + visibleCount;
-
-        document.getElementById('current-count').innerText = totalDone;
-        
-        // 剩余需要安排的次数 = 总目标36 - 当前已安排的总数
-        const remaining = Math.max(0, CONFIG.totalTarget - totalPlanned);
-        document.getElementById('remaining-count').innerText = remaining;
-
-        // 进度条 (基于已完成)
-        const percent = Math.min(100, (totalDone / CONFIG.totalTarget) * 100);
-        document.getElementById('progress-fill').style.width = `${percent}%`;
-        
-        // 颜色变化：如果已安排满36节，剩余数字变绿
-        if (remaining === 0) {
-            document.getElementById('remaining-count').style.color = '#4CAF50';
-        }
-    }
-
-    // 启动渲染
     render();
-
 </script>
 </body>
 </html>
